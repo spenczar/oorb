@@ -1,6 +1,5 @@
 import os
 import subprocess
-import pathlib
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 
@@ -10,6 +9,7 @@ extension = Extension(
     sources=["pyoorb.f90", "pyoorb.pyf"],
     include_dirs=["../build"]
 )
+
 
 class PyoorbBuild(build_ext):
     def run(self):
@@ -29,13 +29,20 @@ class PyoorbBuild(build_ext):
         self.move_file(src, dst)
 
 
-with open("../VERSION", "r") as f:
-    version = f.read().strip()
+def deduce_version():
+    # This is a gnarly hack, but it ensures consistency.
+    stdout = subprocess.PIPE
+    cmd_output = subprocess.run(
+        ["/bin/bash", "../build-tools/compute-version.sh",  "-u"],
+        stdout=stdout,
+    )
+    cmd_output.check_returncode()
+    return cmd_output.stdout.decode("utf8").strip()
 
 
 setup(
     name="pyoorb",
-    version=version,
+    version=deduce_version(),
     ext_modules=[extension],
     cmdclass={
         "build_ext": PyoorbBuild,
