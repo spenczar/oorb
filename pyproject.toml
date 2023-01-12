@@ -18,7 +18,7 @@ yum install gcc-gfortran lapack-devel -y
 
 [[tool.cibuildwheel.overrides]]
 select = "*-musllinux*"
-before-all = "apk update && apk add gfortran lapack"
+before-all = "apk update && apk add gfortran lapack lapack-dev libgfortran"
 
 [[tool.cibuildwheel.overrides]]
 select = "*-manylinux_2_24*"
@@ -26,6 +26,6 @@ before-all = "apt update -y && apt install gfortran liblapack-dev -y"
 
 [tool.cibuildwheel.macos]
 before-all = """
-brew update &&
-brew install gfortran lapack
+brew install gfortran lapack --force
+brew reinstall gcc
 """
