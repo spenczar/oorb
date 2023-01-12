@@ -4,103 +4,31 @@ name: Python Wheels
 # needs to run more often to work out bugs.
 on:
   - push
-
+  
 jobs:
-  build_linux_wheel:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # PEP 425 Python version tags - eg 'cp38-cp38' is a CPython 3.8 build.
-        python_version_tag:
-         - cp36-cp36m
-         - cp37-cp37m
-         - cp38-cp38
-         - cp39-cp39
-    runs-on: ubuntu-latest
-    container:
-      image: quay.io/pypa/manylinux_2_24_x86_64
-
+        os: [ubuntu-20.04, macos-11]
     steps:
-      - name: Install dependencies
-        run: |
-          apt-get update -y
-          apt-get install gfortran liblapack-dev -y
-
-      - name: Select Python Version
-        run: |
-          # Adds the selected Python version to the system path
-          echo "/opt/python/${{ matrix.python_version_tag }}/bin" >> $GITHUB_PATH
-      - name: Install numpy
-        run: |
-          pip install numpy
-
       - uses: actions/checkout@v2
-
-      - name: Configure openorb
-        run: |
-          ./configure gfortran opt --with-pyoorb --with-f2py=f2py --with-python=python
-
-      - name: Build wheel
-        run: |
-          cd python
-          python setup.py bdist_wheel
-
-      - name: Emit wheel
-        uses: actions/upload-artifact@v2
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v2
         with:
-          name: manylinux-${{ matrix.python_version_tag }}-wheel
-          path: python/dist/*.whl
-  verify_linux_wheel:
-    needs: build_linux_wheel
-    strategy:
-      matrix:
-            # PEP 425 Python version tags - eg 'cp38-cp38' is a CPython 3.8 build.
-        python_version_tag:
-         - cp36-cp36m
-         - cp37-cp37m
-         - cp38-cp38
-         - cp39-cp39
-    runs-on: ubuntu-latest
-    steps:
+          platforms: all
 
-      # The manylinux builder uses PEP
-      - if: ${{ matrix.python_version_tag == 'cp36-cp36m' }}
-        name: Install Python 3.6
-        uses: actions/setup-python@v2
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.11.4
+        env:
+          CIBW_BUILD: "cp3{8,9,10,11}-*"
+          CIBW_ARCHS_LINUX: "x86_64 aarch64"
+          CIBW_ARCHS_MACOS: x86_64 arm64
         with:
-          python-version: 3.6
-
-      - if: ${{ matrix.python_version_tag == 'cp37-cp37m' }}
-        name: Install Python 3.7
-        uses: actions/setup-python@v2
+           output-dir: wheelhouse
+           
+      - uses: actions/upload-artifact@v3
         with:
-          python-version: 3.7
-
-      - if: ${{ matrix.python_version_tag == 'cp38-cp38' }}
-        name: Install Python 3.8
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-
-      - if: ${{ matrix.python_version_tag == 'cp39-cp39' }}
-        name: Install Python 3.9
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-
-      - name: Receive wheel
-        uses: actions/download-artifact@v2
-        with:
-          name: manylinux-${{ matrix.python_version_tag }}-wheel
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install gfortran liblapack-dev -y
-
-      - name: Install wheel
-        run: |
-          pip install pyoorb*.whl
-
-      - name: Verify that pyoorb can be imported
-        run: |
-          python -c "import pyoorb"
+          path: ./wheelhouse/*.whl

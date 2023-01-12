@@ -18,7 +18,7 @@ class PyoorbBuild(build_ext):
 
     def build_extension(self, ext):
         try:
-            os.chdir("../")
+            self.spawn(["make", "-j4"])            
             self.spawn(["make", "pyoorb", "-j4"])
         finally:
             os.chdir("./python")
@@ -33,7 +33,7 @@ def deduce_version():
     # This is a gnarly hack, but it ensures consistency.
     stdout = subprocess.PIPE
     cmd_output = subprocess.run(
-        ["../build-tools/compute-version.sh",  "-u"],
+        ["./build-tools/compute-version.sh",  "-u"],
         stdout=stdout,
     )
     cmd_output.check_returncode()
@@ -44,6 +44,8 @@ setup(
     name="pyoorb",
     version=deduce_version(),
     ext_modules=[extension],
+    install_requires=["numpy"],
+    license="GPL3",
     cmdclass={
         "build_ext": PyoorbBuild,
     }
