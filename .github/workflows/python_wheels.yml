@@ -163,7 +163,6 @@ jobs:
           export DOCKER_IMAGE="arm64v8/python:${{ matrix.pyversion }}"
           docker pull --platform linux/arm64 $DOCKER_IMAGE
           docker run \
-            -it \
             --platform linux/arm64 \
             --volume /tmp/artifacts:/tmp/artifacts \
             --volume $PWD/_oorb:/tmp/oorb_latest \
