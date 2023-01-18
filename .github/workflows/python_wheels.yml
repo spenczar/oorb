@@ -17,7 +17,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Check build cache for ${{ github.sha }}
+        uses: actions/cache@v3
+        id: cached-x86-build
+        with:
+          key: ${{ github.sha }}-x86-wheels
+          path: ./wheelhouse
+
       - name: Build wheels
+        if: ${{ steps.cached-x86-build.outputs.cache-hit != true }}
         uses: pypa/cibuildwheel@v2.11.4
         env:
           CIBW_BUILD: "${{ matrix.pyversion }}*"
@@ -39,13 +47,21 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Check build cache for ${{ github.sha }}
+        uses: actions/cache@v3
+        id: cached-aarch64-build
+        with:
+          key: ${{ github.sha }}-aarch64-wheels
+          path: ./wheelhouse
+
       - name: Set up QEMU
-        if: runner.os == 'Linux'
+        if: ${{ runner.os == 'Linux' && steps.cached-aarch64-build.outputs.cache-hit != true }}
         uses: docker/setup-qemu-action@v2
         with:
           platforms: arm64
 
       - name: Build wheels
+        if: ${{ steps.cached-aarch64-build.outputs.cache-hit != true }}
         uses: pypa/cibuildwheel@v2.11.4
         env:
           CIBW_BUILD: "${{ matrix.pyversion }}*"
