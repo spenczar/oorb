@@ -3,6 +3,8 @@ import subprocess
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from pathlib import Path
+import shutil
+import sys
 
 
 extension = Extension(
@@ -19,6 +21,10 @@ class PyoorbBuild(build_ext):
 
     def build_extension(self, ext):
         try:
+            self.spawn(["./configure", "gfortran", "opt",
+                        "--with-pyoorb",
+                        f"--with-f2py={shutil.which('f2py')}",
+                        f"--with-python={sys.executable}"])            
             self.spawn(["make", "-j4"])            
             self.spawn(["make", "pyoorb", "-j4"])
         finally:
