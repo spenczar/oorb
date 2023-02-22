@@ -1,0 +1,18 @@
+# Manifest file for pyoorb, describing all the source files needed
+# when making a pure-source python distribution.
+
+# Include all Fortran files.
+include main/*.f90
+include classes/*.f90
+include modules/*.f90
+include python/*.f90
+
+# Include build-time dependencies
+recursive-include build-tools *
+include build/Makefile build/make.depends
+include Makefile
+include make.config
+include configure
+include VERSION
+include COPYING
+include python/COPYING

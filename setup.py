@@ -2,6 +2,7 @@ import os
 import subprocess
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+from setuptools.command.build import build
 from pathlib import Path
 import shutil
 import sys
@@ -14,7 +15,7 @@ extension = Extension(
 )
 
 
-class PyoorbBuild(build_ext):
+class PyoorbBuildExt(build_ext):
     def run(self):
         for ext in self.extensions:
             self.build_extension(ext)
@@ -24,8 +25,8 @@ class PyoorbBuild(build_ext):
             self.spawn(["./configure", "gfortran", "opt",
                         "--with-pyoorb",
                         f"--with-f2py={shutil.which('f2py')}",
-                        f"--with-python={sys.executable}"])            
-            self.spawn(["make", "-j4"])            
+                        f"--with-python={sys.executable}"])
+            self.spawn(["make", "-j4"])
             self.spawn(["make", "pyoorb", "-j4"])
         finally:
             os.chdir("./python")
@@ -34,6 +35,19 @@ class PyoorbBuild(build_ext):
         dst = self.get_ext_fullpath(ext.name)
         self.mkpath(os.path.dirname(dst))
         self.copy_file(src, dst)
+
+
+class PyoorbBuild(build):
+    """Overrides setuptools default which treats the 'build' directory
+    as a Python build directory; that treatment results in all files
+    in build/ getting pruned out of source distributions, but we want
+    to keep build/Makefile and build/make.depends. So, the build
+    directory is changed to build_py.
+
+    """
+    def initialize_options(self):
+        super().initialize_options()
+        self.build_base = "build_py"
 
 
 def deduce_version():
@@ -66,6 +80,7 @@ setup(
     install_requires=["numpy"],
     license="GPL3",
     cmdclass={
-        "build_ext": PyoorbBuild,
+        "build_ext": PyoorbBuildExt,
+        "build": PyoorbBuild,
     }
 )
