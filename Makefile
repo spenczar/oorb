@@ -61,13 +61,12 @@ endif
 
 .PHONY: all
 
+all: build
+	@ $(MAKE) -C build $@
 build: 
 	mkdir -p build
 	cp build-tools/make.depends build/make.depends
 	cp build-tools/Makefile build/Makefile
-
-all: build
-	@ $(MAKE) -C build $@
 
 ephem:
 	@ $(MAKE) -C data/JPL_ephemeris
