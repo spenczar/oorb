@@ -1,6 +1,7 @@
 #!/bin/bash
 
 PYTHON=${PYTHON:-python}
+PYTHON=${PYTHON:-python3}
 
 # figure out the major python version
 PYVER=$($PYTHON -c 'import sys; print(sys.version_info[0])')
